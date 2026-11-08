@@ -17,7 +17,7 @@ export const handler=async(event)=>{
   const {SUPABASE_URL,SUPABASE_SERVICE_ROLE_KEY,CRYPTO_PAY_API_TOKEN}=process.env;
   if(!SUPABASE_URL||!SUPABASE_SERVICE_ROLE_KEY||!CRYPTO_PAY_API_TOKEN) return out(500,{error:"Не настроены переменные сервера."});
   const auth=event.headers.authorization||event.headers.Authorization||"";
-  const token=auth.match(/^Bearer\\s+(.+)$/i)?.[1];
+  const token = auth.match(/^Bearer\s+(.+)$/i)?.[1];
   if(!token) return out(401,{error:"Сначала войдите через Google."});
   let body; try{body=JSON.parse(event.body||"{}")}catch{return out(400,{error:"Некорректный запрос."})}
   const product=PRODUCTS[body.sku];
