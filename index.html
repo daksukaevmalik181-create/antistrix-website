@@ -424,6 +424,10 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
 <footer>
  <div class="wrap">
   <span>AntiStrix Studio · © 2026</span>
+  <nav aria-label="Документы" style="display:flex;flex-wrap:wrap;gap:14px">
+   <a href="terms.html">Пользовательское соглашение</a>
+   <a href="privacy.html">Политика конфиденциальности</a>
+  </nav>
   <div class="soc">
    <a href="https://t.me/AntiStrixStudio" aria-label="Telegram" target="_blank" rel="noopener"><svg class="i"><use href="#tg"/></svg></a>
    <a href="https://www.tiktok.com/@antistrixofficial" aria-label="TikTok" target="_blank" rel="noopener"><svg class="i"><use href="#tt"/></svg></a>
@@ -434,30 +438,24 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
 
 <dialog id="donate" aria-labelledby="dt">
  <div class="mh">
-  <div><h2 id="dt">Донаты</h2><p>Токены и подписка Strix PRO</p></div>
+  <div><h2 id="dt">Токены и Strix PRO</h2><p>Тарифы проекта AntiStrix</p></div>
   <button class="x" id="dclose" aria-label="Закрыть"><svg class="i"><use href="#close"/></svg></button>
  </div>
- <div class="acc" id="acc"><span>Войдите через Google, чтобы покупки попали в ваш аккаунт.</span><button class="btn main js-auth" type="button">Войти через Google</button></div>
  <div class="price">
-  <div>
-   <h3>Токены</h3>
-   <button class="row" data-p="t41"><span>41 токен</span><b>19 ₽</b></button>
-   <button class="row" data-p="t100"><span>100 токенов</span><b>39 ₽</b></button>
-   <button class="row best" data-p="t300"><span>300 токенов</span><b>99 ₽</b></button>
+  <div><h3>Токены</h3>
+   <div class="row"><span>41 токен</span><b>19 ₽</b></div>
+   <div class="row"><span>100 токенов</span><b>39 ₽</b></div>
+   <div class="row best"><span>300 токенов</span><b>99 ₽</b></div>
   </div>
-  <div>
-   <h3>Strix PRO</h3>
-   <button class="row" data-p="p3d"><span>3 дня</span><b>39 ₽</b></button>
-   <button class="row" data-p="p21d"><span>21 день</span><b>99 ₽</b></button>
-   <button class="row" data-p="p3m"><span>3 месяца</span><b>199 ₽</b></button>
-   <button class="row best" data-p="plife"><span>Навсегда</span><b>499 ₽</b></button>
+  <div><h3>Strix PRO</h3>
+   <div class="row"><span>3 дня</span><b>39 ₽</b></div>
+   <div class="row"><span>21 день</span><b>99 ₽</b></div>
+   <div class="row"><span>3 месяца</span><b>199 ₽</b></div>
+   <div class="row best"><span>Навсегда</span><b>499 ₽</b></div>
   </div>
  </div>
- <p class="msg" id="msg" role="status"></p>
- <div class="gorow"><a class="btn main" id="go" href="#" target="_blank" rel="noopener" hidden><svg class="i"><use href="#tg"/></svg>Оплатить в Telegram</a></div>
- <p class="mf">Оплата проходит через CryptoBot. После оплаты токены и подписка появятся на вашем аккаунте на сайте и в приложении.</p>
+ <p class="mf">Покупки временно недоступны: мы готовим подключение нового платёжного сервиса. Оплата через Crypto Pay отключена. Не переводите деньги по сторонним ссылкам.</p>
 </dialog>
-
 <script>
 (function(){
  var de=document.documentElement;de.classList.add('js');
@@ -566,131 +564,14 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
  }
  if(still){ask.textContent='> '+dlg[0][0];ans.textContent=dlg[0][1];rep.textContent='Strix: '+dlg[0][1]}else loop();
 
- /* аккаунт, баланс и покупки через Telegram */
- var SB_URL='https://swrnonuhhsdajchtorgb.supabase.co';   // публичный адрес проекта Supabase
- var SB_KEY='sb_publishable_Fd4SAKWek0rKuyKMGPTy_g_x7PP8ogG';                      // публичный anon-ключ (НЕ service role)
- var sbOk=SB_URL.indexOf('YOUR-')<0&&!!window.supabase;
- var sb=sbOk?window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce'}}):null;
- var d=document.getElementById('donate');
- var acc=document.getElementById('acc'),msg=document.getElementById('msg'),go=document.getElementById('go');
- var session=null,lastLoad=0;
- function store(k,v){try{v==null?sessionStorage.removeItem(k):sessionStorage.setItem(k,v)}catch(e){}}
- function read(k){try{return sessionStorage.getItem(k)}catch(e){return null}}
- function esc(t){var x=document.createElement('div');x.textContent=t;return x.innerHTML}
- function currentTab(){return panels.projects.hidden?'studio':'projects'}
- function login(sku){
-  if(!sb){msg.textContent='Вход ещё не подключён: впишите SB_URL и SB_KEY в index.html.';go.hidden=true;d.showModal();return}
-  store('as_tab',currentTab());
-  store('as_sku',sku||null);
-  sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}});
- }
- function logout(){if(sb)sb.auth.signOut()}
- function mark(sku){
-  document.querySelectorAll('.row[data-p]').forEach(function(r){r.classList.toggle('sel',r.dataset.p===sku)});
- }
- async function render(){
-  var btns=document.querySelectorAll('.js-auth');
-  if(!session){
-   btns.forEach(function(b){b.textContent='Войти через Google'});
-   acc.innerHTML='<span>Войдите через Google, чтобы покупки попали в ваш аккаунт.</span><button class="btn main js-auth" type="button">Войти через Google</button>';
-   acc.querySelector('.js-auth').onclick=function(){login()};
-   return;
-  }
-  btns.forEach(function(b){b.textContent='Выйти'});
-  var email=esc(session.user.email||'Аккаунт');
-  acc.innerHTML='<span>'+email+'</span><span>Загружаем баланс…</span>';
-  var r = await sb.from('pc_wallets')
-  .select('token_balance,pro_expires_at')
-  .eq('user_id', session.user.id)
-  .maybeSingle();
-  if(!session)return;
-  if(r.error){
-   acc.innerHTML='<span>'+email+'</span><span>Не удалось получить баланс</span><button class="btn" type="button" id="out">Выйти</button>';
-  }else{
-   var w = r.data || { token_balance: 0 };
-var pro = 'нет';
-
-if (w.pro_expires_at) {
-  var expiry = new Date(w.pro_expires_at);
-
-  if (expiry > new Date()) {
-    pro = expiry.getFullYear() >= 9999
-      ? 'навсегда'
-      : 'до ' + expiry.toLocaleDateString('ru-RU');
-  }
-}
-
-acc.innerHTML =
-  '<span>' + email + '</span>' +
-  '<span>Токены: <b>' + (w.token_balance || 0) + '</b></span>' +
-  '<span>Strix PRO: <b>' + pro + '</b></span>' +
-  '<button class="btn" type="button" id="out">Выйти</button>';
-}
-document.getElementById('out').onclick = logout;
-}
- /* возврат после входа: открываем выбранный товар */
- function resume(){
-  var sku=read('as_sku'),tab=read('as_tab');
-  store('as_sku',null);store('as_tab',null);
-  if(tab)show(tab,false);
-  if(/[?&]code=|access_token=/.test(location.search+location.hash)){
-   history.replaceState(null,'',location.pathname+(tab==='projects'?'#projects':''));
-  }
-  if(sku&&session&&document.querySelector('.row[data-p="'+sku+'"]')){
-   mark(sku);msg.textContent='Вы вошли. Выберите товар ещё раз, чтобы создать счёт Crypto Pay.';
-   if(!d.open)d.showModal();
-  }
- }
- /* баланс обновляется, когда пользователь возвращается на сайт (например, из Telegram) */
- function refresh(){
-  if(!session||document.hidden||Date.now()-lastLoad<3000)return;
-  lastLoad=Date.now();render();
- }
- document.querySelectorAll('.js-auth').forEach(function(b){
-  b.addEventListener('click',function(){session?logout():login()});
+ /* Покупки временно отключены до подключения нового платёжного сервиса. */
+ var donateDialog=document.getElementById('donate');
+ document.querySelectorAll('.js-donate').forEach(function(button){
+  button.addEventListener('click',function(){if(donateDialog&&!donateDialog.open)donateDialog.showModal()});
  });
- if(sb){
-  sb.auth.getSession().then(function(r){session=r.data.session;lastLoad=Date.now();return render()}).then(resume);
-  sb.auth.onAuthStateChange(function(ev,s){
-   var was=!!session;session=s;
-   if(ev==='SIGNED_IN'&&was)return;
-   if(ev==='SIGNED_IN'||ev==='SIGNED_OUT'||ev==='USER_UPDATED')render();
-  });
-  document.addEventListener('visibilitychange',refresh);
-  addEventListener('focus',refresh);
-  addEventListener('pageshow',refresh);
- }
- /* Счёт создаёт сервер Netlify; секреты не попадают в браузер */
- document.querySelectorAll('.row[data-p]').forEach(function(row){
-  row.addEventListener('click',async function(){
-   var sku=row.dataset.p;
-   mark(sku);go.hidden=true;msg.textContent='';
-   if(!sb){msg.textContent='Сначала подключите Supabase.';return}
-   if(!session){msg.textContent='Для покупки нужно войти через Google. Перенаправляем…';setTimeout(function(){login(sku)},700);return}
-   row.disabled=true;msg.textContent='Создаём счёт Crypto Pay…';
-   try{
-    var sr=await sb.auth.getSession();
-    var access=sr.data&&sr.data.session&&sr.data.session.access_token;
-    if(!access)throw new Error('Сессия не найдена. Войдите через Google ещё раз.');
-    var response=await fetch('/.netlify/functions/create-invoice',{
-     method:'POST',
-     headers:{'Content-Type':'application/json','Authorization':'Bearer '+access},
-     body:JSON.stringify({sku:sku})
-    });
-    var data=await response.json();
-    if(!response.ok)throw new Error(data.error||'Не удалось создать счёт.');
-    if(!data.pay_url)throw new Error('Сервер не вернул ссылку на оплату.');
-    go.href=data.pay_url;go.hidden=false;
-    msg.textContent='Счёт создан. Откройте CryptoBot для оплаты.';
-    window.open(data.pay_url,'_blank','noopener');
-   }catch(e){msg.textContent=e.message||'Ошибка создания счёта.'}
-   finally{row.disabled=false}
-  });
- });
- /* донаты */
- document.querySelectorAll('.js-donate').forEach(function(b){b.addEventListener('click',function(){msg.textContent='';go.hidden=true;mark(null);d.showModal()})});
- document.getElementById('dclose').addEventListener('click',function(){d.close()});
- d.addEventListener('click',function(e){if(e.target===d)d.close()});
+ var closeDonate=document.getElementById('dclose');
+ if(closeDonate)closeDonate.addEventListener('click',function(){donateDialog.close()});
+ if(donateDialog)donateDialog.addEventListener('click',function(event){if(event.target===donateDialog)donateDialog.close()});
 })();
 </script>
 </body>
