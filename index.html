@@ -575,7 +575,18 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
  var authBtn=document.getElementById('authBtn');
  var session=null;
  function safeText(value){var el=document.createElement('span');el.textContent=value||'';return el.innerHTML}
+ function updateHeaderAuth(){
+  document.querySelectorAll('.js-auth').forEach(function(button){
+   button.textContent=session?'Аккаунт':'Войти через Google';
+   button.title=session?(session.user.email||'Вы вошли в аккаунт'):'Войти через Google';
+   button.onclick=session?function(){
+    if(donateDialog&&!donateDialog.open)donateDialog.showModal();
+    renderAccount();
+   }:login;
+  });
+ }
  async function renderAccount(){
+  updateHeaderAuth();
   if(!acc)return;
   if(!sb){acc.textContent='Авторизация временно недоступна.';return}
   if(!session){
@@ -601,7 +612,7 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
    .then(function(r){if(r.error){console.error('Google OAuth error:',r.error);alert('Не удалось начать вход через Google: '+r.error.message)}})
    .catch(function(e){console.error('Google OAuth error:',e);alert('Ошибка входа через Google. Попробуйте позже.')});
  }
- document.querySelectorAll('.js-auth').forEach(function(button){button.addEventListener('click',login)});
+ updateHeaderAuth();
  function logout(){if(sb)sb.auth.signOut()}
  if(sb){
   // Load any session already restored from the Google OAuth callback.
