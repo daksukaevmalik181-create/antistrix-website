@@ -583,15 +583,16 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
    document.getElementById('authBtn').onclick=login;
    return;
   }
-  acc.innerHTML='<span>'+safeText(session.user.email||'Аккаунт')+'</span><span>Загружаем баланс…</span><button class="btn" id="authBtn" type="button">Выйти</button>';
+  var currentSession=session;
+  acc.innerHTML='<span>'+safeText(currentSession.user.email||'Аккаунт')+'</span><span>Загружаем баланс…</span><button class="btn" id="authBtn" type="button">Выйти</button>';
   document.getElementById('authBtn').onclick=logout;
-  var result=await sb.from('pc_wallets').select('token_balance,pro_expires_at').eq('user_id',session.user.id).maybeSingle();
-  if(!session)return;
-  if(result.error){acc.innerHTML='<span>'+safeText(session.user.email||'Аккаунт')+'</span><span>Не удалось загрузить баланс.</span><button class="btn" id="authBtn" type="button">Выйти</button>';document.getElementById('authBtn').onclick=logout;return}
+  var result=await sb.from('pc_wallets').select('token_balance,pro_expires_at').eq('user_id',currentSession.user.id).maybeSingle();
+  if(session!==currentSession)return;
+  if(result.error){acc.innerHTML='<span>'+safeText(currentSession.user.email||'Аккаунт')+'</span><span>Не удалось загрузить баланс.</span><button class="btn" id="authBtn" type="button">Выйти</button>';document.getElementById('authBtn').onclick=logout;return}
   var wallet=result.data||{token_balance:0};
   var pro='нет';
   if(wallet.pro_expires_at){var expiry=new Date(wallet.pro_expires_at);if(expiry>new Date())pro=expiry.getFullYear()>=9999?'навсегда':'до '+expiry.toLocaleDateString('ru-RU')}
-  acc.innerHTML='<span>'+safeText(session.user.email||'Аккаунт')+'</span><span>Токены: <b>'+(wallet.token_balance||0)+'</b></span><span>Strix PRO: <b>'+pro+'</b></span><button class="btn" id="authBtn" type="button">Выйти</button>';
+  acc.innerHTML='<span>'+safeText(currentSession.user.email||'Аккаунт')+'</span><span>Токены: <b>'+(wallet.token_balance||0)+'</b></span><span>Strix PRO: <b>'+pro+'</b></span><button class="btn" id="authBtn" type="button">Выйти</button>';
   document.getElementById('authBtn').onclick=logout;
  }
  function login(){
@@ -603,8 +604,10 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
  document.querySelectorAll('.js-auth').forEach(function(button){button.addEventListener('click',login)});
  function logout(){if(sb)sb.auth.signOut()}
  if(sb){
-  sb.auth.getSession().then(function(r){session=r.data.session;renderAccount()});
-  sb.auth.onAuthStateChange(function(event,next){session=next;if(event==='SIGNED_IN'||event==='SIGNED_OUT'||event==='USER_UPDATED')renderAccount()});
+  sb.auth.onAuthStateChange(function(event,next){
+   session=next;
+   Promise.resolve().then(function(){renderAccount()});
+  });
  }
  /* Покупки временно отключены до подключения нового платёжного сервиса. */
  document.querySelectorAll('.js-donate').forEach(function(button){
