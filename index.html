@@ -597,16 +597,23 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
  }
  function login(){
   if(!sb){alert('Авторизация временно недоступна. Обновите страницу и попробуйте ещё раз.');return}
-  sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname+'#projects'}})
+  sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}})
    .then(function(r){if(r.error){console.error('Google OAuth error:',r.error);alert('Не удалось начать вход через Google: '+r.error.message)}})
    .catch(function(e){console.error('Google OAuth error:',e);alert('Ошибка входа через Google. Попробуйте позже.')});
  }
  document.querySelectorAll('.js-auth').forEach(function(button){button.addEventListener('click',login)});
  function logout(){if(sb)sb.auth.signOut()}
  if(sb){
+  // Load any session already restored from the Google OAuth callback.
+  sb.auth.getSession().then(function(result){
+   if(result.error){console.error('Supabase getSession error:',result.error);return}
+   session=result.data.session;
+   renderAccount();
+  }).catch(function(error){console.error('Supabase session restore error:',error)});
+  // Keep this callback synchronous; defer UI/database work outside Supabase's auth callback.
   sb.auth.onAuthStateChange(function(event,next){
    session=next;
-   Promise.resolve().then(function(){renderAccount()});
+   setTimeout(function(){renderAccount()},0);
   });
  }
  /* Покупки временно отключены до подключения нового платёжного сервиса. */
