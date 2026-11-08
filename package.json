@@ -1,0 +1,8 @@
+{
+  "name": "antistrix-studio",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4"
+  }
+}
