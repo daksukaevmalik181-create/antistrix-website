@@ -441,6 +441,7 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
   <div><h2 id="dt">Токены и Strix PRO</h2><p>Тарифы проекта AntiStrix</p></div>
   <button class="x" id="dclose" aria-label="Закрыть"><svg class="i"><use href="#close"/></svg></button>
  </div>
+ <div class="acc" id="acc"><span>Войдите через Google, чтобы увидеть баланс аккаунта.</span><button class="btn main" id="authBtn" type="button">Войти через Google</button></div>
  <div class="price">
   <div><h3>Токены</h3>
    <div class="row"><span>41 токен</span><b>19 ₽</b></div>
@@ -454,7 +455,7 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
    <div class="row best"><span>Навсегда</span><b>499 ₽</b></div>
   </div>
  </div>
- <p class="mf">Покупки временно недоступны: мы готовим подключение нового платёжного сервиса. Оплата через Crypto Pay отключена. Не переводите деньги по сторонним ссылкам.</p>
+ <p class="mf">Покупки временно недоступны: мы готовим подключение нового платёжного сервиса. Покупки пока недоступны. Не переводите деньги по сторонним ссылкам.</p>
 </dialog>
 <script>
 (function(){
@@ -564,10 +565,46 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
  }
  if(still){ask.textContent='> '+dlg[0][0];ans.textContent=dlg[0][1];rep.textContent='Strix: '+dlg[0][1]}else loop();
 
- /* Покупки временно отключены до подключения нового платёжного сервиса. */
+ /* Аккаунт и баланс: оплата на сайте временно отключена. */
+ var SB_URL='https://swrnonuhhsdajchtorgb.supabase.co';
+ var SB_KEY='sb_publishable_Fd4SAKWek0rKuyKMGPTy_g_x7PP8ogG';
+ var sb=window.supabase?window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce'}}):null;
  var donateDialog=document.getElementById('donate');
+ var acc=document.getElementById('acc');
+ var authBtn=document.getElementById('authBtn');
+ var session=null;
+ function safeText(value){var el=document.createElement('span');el.textContent=value||'';return el.innerHTML}
+ async function renderAccount(){
+  if(!acc)return;
+  if(!sb){acc.textContent='Авторизация временно недоступна.';return}
+  if(!session){
+   acc.innerHTML='<span>Войдите через Google, чтобы увидеть баланс аккаунта.</span><button class="btn main" id="authBtn" type="button">Войти через Google</button>';
+   document.getElementById('authBtn').onclick=login;
+   return;
+  }
+  acc.innerHTML='<span>'+safeText(session.user.email||'Аккаунт')+'</span><span>Загружаем баланс…</span><button class="btn" id="authBtn" type="button">Выйти</button>';
+  document.getElementById('authBtn').onclick=logout;
+  var result=await sb.from('pc_wallets').select('token_balance,pro_expires_at').eq('user_id',session.user.id).maybeSingle();
+  if(!session)return;
+  if(result.error){acc.innerHTML='<span>'+safeText(session.user.email||'Аккаунт')+'</span><span>Не удалось загрузить баланс.</span><button class="btn" id="authBtn" type="button">Выйти</button>';document.getElementById('authBtn').onclick=logout;return}
+  var wallet=result.data||{token_balance:0};
+  var pro='нет';
+  if(wallet.pro_expires_at){var expiry=new Date(wallet.pro_expires_at);if(expiry>new Date())pro=expiry.getFullYear()>=9999?'навсегда':'до '+expiry.toLocaleDateString('ru-RU')}
+  acc.innerHTML='<span>'+safeText(session.user.email||'Аккаунт')+'</span><span>Токены: <b>'+(wallet.token_balance||0)+'</b></span><span>Strix PRO: <b>'+pro+'</b></span><button class="btn" id="authBtn" type="button">Выйти</button>';
+  document.getElementById('authBtn').onclick=logout;
+ }
+ function login(){
+  if(!sb)return;
+  sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname+'#projects'}});
+ }
+ function logout(){if(sb)sb.auth.signOut()}
+ if(sb){
+  sb.auth.getSession().then(function(r){session=r.data.session;renderAccount()});
+  sb.auth.onAuthStateChange(function(event,next){session=next;if(event==='SIGNED_IN'||event==='SIGNED_OUT'||event==='USER_UPDATED')renderAccount()});
+ }
+ /* Покупки временно отключены до подключения нового платёжного сервиса. */
  document.querySelectorAll('.js-donate').forEach(function(button){
-  button.addEventListener('click',function(){if(donateDialog&&!donateDialog.open)donateDialog.showModal()});
+  button.addEventListener('click',function(){if(donateDialog&&!donateDialog.open)donateDialog.showModal();renderAccount()});
  });
  var closeDonate=document.getElementById('dclose');
  if(closeDonate)closeDonate.addEventListener('click',function(){donateDialog.close()});
