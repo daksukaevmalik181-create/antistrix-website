@@ -595,9 +595,12 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
   document.getElementById('authBtn').onclick=logout;
  }
  function login(){
-  if(!sb)return;
-  sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname+'#projects'}});
+  if(!sb){alert('Авторизация временно недоступна. Обновите страницу и попробуйте ещё раз.');return}
+  sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname+'#projects'}})
+   .then(function(r){if(r.error){console.error('Google OAuth error:',r.error);alert('Не удалось начать вход через Google: '+r.error.message)}})
+   .catch(function(e){console.error('Google OAuth error:',e);alert('Ошибка входа через Google. Попробуйте позже.')});
  }
+ document.querySelectorAll('.js-auth').forEach(function(button){button.addEventListener('click',login)});
  function logout(){if(sb)sb.auth.signOut()}
  if(sb){
   sb.auth.getSession().then(function(r){session=r.data.session;renderAccount()});
