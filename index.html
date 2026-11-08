@@ -599,18 +599,35 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;
   btns.forEach(function(b){b.textContent='Выйти'});
   var email=esc(session.user.email||'Аккаунт');
   acc.innerHTML='<span>'+email+'</span><span>Загружаем баланс…</span>';
-  var r=await sb.from('wallets').select('tokens,pro_until,pro_forever').eq('user_id',session.user.id).maybeSingle();
+  var r = await sb.from('pc_wallets')
+  .select('token_balance,pro_expires_at')
+  .eq('user_id', session.user.id)
+  .maybeSingle();
   if(!session)return;
   if(r.error){
    acc.innerHTML='<span>'+email+'</span><span>Не удалось получить баланс</span><button class="btn" type="button" id="out">Выйти</button>';
   }else{
-   var w=r.data||{tokens:0},pro='нет';
-   if(w.pro_forever)pro='навсегда';
-   else if(w.pro_until&&new Date(w.pro_until)>new Date())pro='до '+new Date(w.pro_until).toLocaleDateString('ru-RU');
-   acc.innerHTML='<span>'+email+'</span><span>Токены: <b>'+(w.tokens||0)+'</b></span><span>Strix PRO: <b>'+pro+'</b></span><button class="btn" type="button" id="out">Выйти</button>';
+   var w = r.data || { token_balance: 0 };
+var pro = 'нет';
+
+if (w.pro_expires_at) {
+  var expiry = new Date(w.pro_expires_at);
+
+  if (expiry > new Date()) {
+    pro = expiry.getFullYear() >= 9999
+      ? 'навсегда'
+      : 'до ' + expiry.toLocaleDateString('ru-RU');
   }
-  document.getElementById('out').onclick=logout;
- }
+}
+
+acc.innerHTML =
+  '<span>' + email + '</span>' +
+  '<span>Токены: <b>' + (w.token_balance || 0) + '</b></span>' +
+  '<span>Strix PRO: <b>' + pro + '</b></span>' +
+  '<button class="btn" type="button" id="out">Выйти</button>';
+}
+document.getElementById('out').onclick = logout;
+}
  /* возврат после входа: открываем выбранный товар */
  function resume(){
   var sku=read('as_sku'),tab=read('as_tab');
